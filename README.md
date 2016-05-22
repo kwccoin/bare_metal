@@ -5,19 +5,23 @@
 *  This is a start to study from scratch different 1 (x86 and ARM mainly, perhaps some S360) and later on network (of 2 - just 2, 2 cooperate, 2 non-cooperate, ... with some links; then the idea of many)
 
 1. OS Part (x86)
+
   * little book of OS rely upon 
+    * https://littleosbook.github.io/#introduction 
     * GRUB, 
     * x86 assembly (NASM)
     * elf
     * 16->32 bit
     * C and assembly
   * mikeos rely upon
+    * http://mikeos.sourceforge.net/ 
     * no GRUB, self loader
     * x86 assembly (NASM)
     * 16 bit only!
     * BIOS a lot 
     * flat binary
-  * brokenhorn is 16->32 bit, assembly and flat binary up
+  * brokenhorn is 16->32 bit, assembly and flat binary
+    * http://www.brokenthorn.com/Resources/OSDevIndex.html
     * no GRUB, self loader 
     * x86 assembly (NASM)
     * flat binary
@@ -25,7 +29,9 @@
     * VC is involved later
 
 2. OS Part (ARM)
+
   * Cambridge
+    * https://www.cl.cam.ac.uk/projects/raspberrypi/tutorials/os/
     * ARM fixed loader (due to use of GPU setup routine)
     * old PI only (may try to update it as valvur do)
     * rely upon 3rd party USB
@@ -33,9 +39,20 @@
     * elf
     * cross tool chain
   * valver
+    * http://www.valvers.com/open-software/raspberry-pi/step01-bare-metal-programming-in-cpt1/
     * as using ARM it use ARM fixed loader
     * cover new Pi2 and old Pi
     * Mainly C with C-ARM assemby
+  * linux 0.11
+    * https://gitlab.com/tinylab/linux-0.11
+  * GBA
+    * http://wiki.osdev.org/GameBoy_Advance_Barebones
+    * http://www.coranac.com/tonc/text/toc.htm
+    * http://www.loirak.com/gameboy/
+  * in general
+    * http://wiki.osdev.org/Tutorials
+    * http://wiki.osdev.org/Bare_Bones
+    * http://wiki.osdev.org/Babystep1
 
 3. network bit 
   * SNA vs TCP/IP (well vs TV, Radio, fire, smoke ...)
@@ -61,5 +78,7 @@ N. P part
 
 ## The key is how the experiement and history of IT illumuate all these, stay tuned
 
-
+- helpful links
+ - https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet
+ - http://assemble.io/docs/Cheatsheet-Markdown.html
 
