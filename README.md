@@ -13,6 +13,7 @@
     * elf
     * 16->32 bit
     * C and assembly
+    * 
   * mikeos rely upon
     * http://mikeos.sourceforge.net/ 
     * no GRUB, self loader
@@ -20,6 +21,7 @@
     * 16 bit only!
     * BIOS a lot 
     * flat binary
+    * 
   * brokenhorn is 16->32 bit, assembly and flat binary
     * http://www.brokenthorn.com/Resources/OSDevIndex.html
     * no GRUB, self loader 
@@ -27,6 +29,14 @@
     * flat binary
     * BIOS first then 32 bit on one's own
     * VC is involved later
+    * 
+  * linux 0.11
+    * https://gitlab.com/tinylab/linux-0.11
+    * http://tinylab.org/linux-0.11-lab/
+    * http://tinylab.org/take-5-minutes-to-build-linux-0-11-experiment-envrionment/
+    * http://www.oldlinux.org/download/clk011c-3.0.pdf
+    * http://www.oldlinux.org/
+    * 
 
 2. OS Part (ARM)
 
@@ -38,21 +48,23 @@
     * binary
     * elf
     * cross tool chain
+    * 
   * valver
     * http://www.valvers.com/open-software/raspberry-pi/step01-bare-metal-programming-in-cpt1/
     * as using ARM it use ARM fixed loader
     * cover new Pi2 and old Pi
     * Mainly C with C-ARM assemby
-  * linux 0.11
-    * https://gitlab.com/tinylab/linux-0.11
+    * 
   * GBA
     * http://wiki.osdev.org/GameBoy_Advance_Barebones
     * http://www.coranac.com/tonc/text/toc.htm
     * http://www.loirak.com/gameboy/
+    * 
   * in general
     * http://wiki.osdev.org/Tutorials
     * http://wiki.osdev.org/Bare_Bones
     * http://wiki.osdev.org/Babystep1
+    * 
 
 3. network bit 
   * SNA vs TCP/IP (well vs TV, Radio, fire, smoke ...)
