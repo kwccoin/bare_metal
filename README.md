@@ -13,6 +13,7 @@
     * elf
     * 16->32 bit
     * C and assembly
+    * may need this : https://web.archive.org/web/20140130143820/http://robinhoksbergen.com/papers/howto_elf.html
     * 
   * mikeos rely upon
     * http://mikeos.sourceforge.net/ 
