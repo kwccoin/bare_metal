@@ -86,7 +86,7 @@ N. P part
   * Communism not dying around here and seems still a driving force behind and hence ...
   * software bit (DNA, gene, ...) as a kind 
   * network bit 
-  * histroy bit 
+  * histroy bit, chinese, christainity and buddhism spread ... not sure about Muslium
 
 ## The key is how the experiement and history of IT illumuate all these, stay tuned
 
