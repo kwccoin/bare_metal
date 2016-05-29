@@ -1,0 +1,45 @@
+megs:            32
+display_library: sdl, options="gui_debug"
+romimage: file=$BXSHARE/BIOS-bochs-latest # see osdev-readme.
+
+vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
+vga: extension=vbe, update_freq=15
+#ata0-master:     type=cdrom, path=osdev10.iso, status=inserted # not working ...
+#boot:            cdrom
+floppya: 1_44=../osdev/osdev10.flp, status=inserted
+boot:            a
+
+log:         osdev10-ub.txt
+error:       action=report 
+info:        action=report
+
+clock:           sync=realtime, time0=local
+cpu:             count=1, ips=1000000
+
+magic_break: enabled=1
+
+#is_sm@132022_SM_IS /cygdrive/d/mike-os-assem
+#$ cd /cygdrive/d/mike-os-assem/
+
+#is_sm@132022_SM_IS /cygdrive/d/mike-os-assem
+#$ nasm -f bin -o mikeos1.bin mikeos1.asm
+
+#is_sm@132022_SM_IS /cygdrive/d/mike-os-assem
+#$ dd status=noxfer conv=notrunc if=mikeos1.bin of=mikeos1.flp
+#1+0 records in
+#1+0 records out
+
+#is_sm@132022_SM_IS /cygdrive/d/mike-os-assem
+#$ ls
+#bochs-2.6.8.run
+#'How to write a simple operating system in assembly language.html'
+#'How to write a simple operating system in assembly language_files'
+#mikeos1.asm
+#mikeos1.bin
+#mikeos1.flp
+#'qemu ... not ok'
+
+#is_sm@132022_SM_IS /cygdrive/d/mike-os-assem
+#$
+
+#qemu not sure ...

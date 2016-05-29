@@ -1,0 +1,111 @@
+# need nasm for flat binary
+# cygwin.bat
+# cd ......
+# make -f Makefile.osdev11 
+
+# osdev no.5 is not working as you cannot just use org to do memory
+
+AS = nasm
+ASFLAGS = -f bin 		# 512 byte MBR !!!!
+
+all: osdev11.flp 
+
+# only flp as it use flat binary for bootloader (not elf or pe)
+
+# http://mikeos.sourceforge.net/write-your-own-os.html
+# http://wiki.osdev.org/Bare_Bones_with_NASM
+# http://www.brokenthorn.com/Resources/osdev11.html
+
+# note no change to osdev11-
+#	boot1.asm, studio.inc, 
+#   use Ch9 A20.inc and stage2.asm
+#   note 2 more symbols under gdt.inc as well
+#   plus xchg bx,bx for debugging
+#   note the use of the most portable method Ch 9 m3.2
+
+osdev11.flp: osdev11-boot1.bin osdev11-stage2.bin osdev11-stage3.bin
+
+	#sudo umount -f /media/osdev11
+	#objdump -D sum_of_three.o
+	#objdump -D loader.o 
+	echo "=================="
+	file osdev11-boot1.bin
+	hexdump osdev11-boot1.bin > osdev11-boot1.bin.hexdump.txt
+	echo "------------------"
+	#sudo dd bs=512 count=2880 if=/dev/zero of=/home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev11.flp conv=notrunc # or bs=2x80x18b 
+	#sudo mkfs.msdos /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev11.flp
+	
+	sudo dd bs=512 count=2880 if=/dev/zero of=osdev11.flp conv=notrunc # or bs=2x80x18b 
+	sudo mkfs.msdos osdev11.flp
+	
+	# dd if=bootload.bin of=disk.img conv=?noconv? 
+	#dd status=noxfer conv=notrunc if=osdev11-boot1.bin of=osdev11.flp
+	dd status=noxfer conv=notrunc if=osdev11-boot1.bin of=osdev11.flp
+	
+	echo "------------------"
+	file osdev11.flp
+	hexdump osdev11.flp > osdev11.flp.hexdump.txt
+	echo "==================="
+	
+	sudo mkdir -p /media/osdev11     # only work under unix
+	#sudo mount -o loop /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev11.flp /media/osdev11/
+	sudo mount -o loop osdev11.flp /media/osdev11/
+	
+	sudo cp osdev11-boot1.bin /media/osdev11/OSDEVREF.BIN
+	sudo cp osdev11-stage2.bin /media/osdev11/KRNLDR.SYS
+	sudo cp osdev11-stage3.bin /media/osdev11/KRNL.SYS
+	
+	sudo umount /media/osdev11
+	#sudo mount -o loop /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev11.flp /media/osdev11/
+	sudo mount -o loop osdev11.flp /media/osdev11/
+	ls -al /media/osdev11/
+	# sudo umount /media/osdev11
+	
+	# remember to umount /media/osdev11
+
+osdev11-iso.iso: osdev11-iso.bin		# only for barebone elf & eltorito & NOT under wins
+
+	echo "~~~~~~~~~~~~~~~~"
+	file osdev11-iso.bin
+	hexdump osdev11-iso.bin
+	objdump -d osdev11-iso.bin
+	objdump -D osdev11-iso.bin
+	echo "^^^^^^^^^^^^^^^^^"
+	cp osdev11-iso.bin iso/boot/kernel.elf
+	genisoimage -R                              \
+		-b boot/grub/stage2_eltorito    \
+		-no-emul-boot                   \
+		-boot-load-size 4               \
+		-A os                           \
+		-input-charset utf8             \
+		-quiet                          \
+		-boot-info-table                \
+		-o os.iso                       \
+		iso
+	cp os.iso osdev11-iso.iso 
+
+	#mkisofs -o osdev11.iso -b osdev11.bin cdiso/  # not working ... not understand ... MBR to iso ...
+
+run: osdev11.flp
+	bochs -f ../bochs-2.6.8.run/osdev11-ub.bxrc -q # cannot run under cygwin
+	sudo umount -f /media/osdev11
+	
+	# not working isobochs -f ../bochs-2.6.8.run/osdev11-iso.bxrc -q # cannot run under cygwin
+	# manual under win: cd bochs-2.6.8.run
+	# manual under win: click osdev11.bat
+
+osdev11-boot1.bin: osdev11-stage1-boot1.asm 							
+	nasm -f bin -o osdev11-boot1.bin osdev11-stage1-boot1.asm
+
+osdev11-stage2.bin: osdev11-stage2.asm 							
+	nasm -f bin -o osdev11-stage2.bin osdev11-stage2.asm
+
+osdev11-stage3.bin: osdev11-stage3.asm 							
+	nasm -f bin -o osdev11-stage3.bin osdev11-stage3.asm
+
+osdev11-iso.bin: osdev11-iso.asm 							# nasm -f bin -o osdev11.bin osdev11.asm
+	nasm -f elf32 -o osdev11-iso.bin osdev11-iso.asm		# need linker not work under wins
+
+	
+clean:
+	rm -rf *.o *.obj *.elf *.flp *.iso *.bin		# no need bochs-2.6.8.run/*.iso bochs-2.6.8.run/*.flp

@@ -1,0 +1,68 @@
+# need nasm for flat binary
+# cygwin.bat
+# cd ......
+# make -f Makefile.osdev4 
+
+AS = nasm
+ASFLAGS = -f bin 		# 512 byte MBR !!!!
+
+all: osdev4.flp 
+
+# only flp as it use flat binary for bootloader (not elf or pe)
+
+# http://mikeos.sourceforge.net/write-your-own-os.html
+# http://wiki.osdev.org/Bare_Bones_with_NASM
+# http://www.brokenthorn.com/Resources/osdev4.html
+
+osdev4.flp: osdev4.bin
+ 
+	#objdump -D sum_of_three.o
+	#objdump -D loader.o 
+	echo "=================="
+	file osdev4.bin
+	hexdump osdev4.bin
+	echo "------------------"
+	dd status=noxfer conv=notrunc if=osdev4.bin of=osdev4.flp
+	echo "------------------"
+	file osdev4.flp
+	hexdump osdev4.flp
+	echo "==================="
+
+osdev4-iso.iso: osdev4-iso.bin		# only for barebone elf & eltorito & NOT under wins
+
+	echo "~~~~~~~~~~~~~~~~"
+	file osdev4-iso.bin
+	hexdump osdev4-iso.bin
+	objdump -d osdev4-iso.bin
+	objdump -D osdev4-iso.bin
+	echo "^^^^^^^^^^^^^^^^^"
+	cp osdev4-iso.bin iso/boot/kernel.elf
+	genisoimage -R                              \
+		-b boot/grub/stage2_eltorito    \
+		-no-emul-boot                   \
+		-boot-load-size 4               \
+		-A os                           \
+		-input-charset utf8             \
+		-quiet                          \
+		-boot-info-table                \
+		-o os.iso                       \
+		iso
+	cp os.iso osdev4-iso.iso 
+
+	#mkisofs -o osdev4.iso -b osdev4.bin cdiso/  # not working ... not understand ... MBR to iso ...
+
+run: osdev4.flp
+	bochs -f ../bochs-2.6.8.run/osdev4-ub.bxrc -q # cannot run under cygwin
+	# not working isobochs -f ../bochs-2.6.8.run/osdev4-iso.bxrc -q # cannot run under cygwin
+	# manual under win: cd bochs-2.6.8.run
+	# manual under win: click osdev4.bat
+
+osdev4.bin: osdev4-boot1.asm 									# nasm -f bin -o osdev4.bin osdev4.asm
+	nasm -f bin -o osdev4.bin osdev4-boot1.asm
+
+osdev4-iso.bin: osdev4-iso.asm 							# nasm -f bin -o osdev4.bin osdev4.asm
+	nasm -f elf32 -o osdev4-iso.bin osdev4-iso.asm		# need linker not work under wins
+
+	
+clean:
+	rm -rf *.o *.obj *.elf *.flp *.iso 		# no need bochs-2.6.8.run/*.iso bochs-2.6.8.run/*.flp

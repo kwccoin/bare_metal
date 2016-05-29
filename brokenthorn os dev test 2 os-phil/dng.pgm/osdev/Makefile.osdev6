@@ -1,0 +1,90 @@
+# need nasm for flat binary
+# cygwin.bat
+# cd ......
+# make -f Makefile.osdev6 
+
+# osdev no.5 is not working as you cannot just use org to do memory
+
+AS = nasm
+ASFLAGS = -f bin 		# 512 byte MBR !!!!
+
+all: osdev6.flp 
+
+# only flp as it use flat binary for bootloader (not elf or pe)
+
+# http://mikeos.sourceforge.net/write-your-own-os.html
+# http://wiki.osdev.org/Bare_Bones_with_NASM
+# http://www.brokenthorn.com/Resources/osdev6.html
+
+osdev6.flp: osdev6-boot1.bin osdev6-stage2.bin
+
+	sudo umount -f /media/osdev6
+	#objdump -D sum_of_three.o
+	#objdump -D loader.o 
+	echo "=================="
+	file osdev6-boot1.bin
+	hexdump osdev6-boot1.bin > osdev6-boot1.bin.hexdump.txt
+	echo "------------------"
+	sudo dd bs=512 count=2880 if=/dev/zero of=/home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev6.flp conv=notrunc # or bs=2x80x18b 
+	sudo mkfs.msdos /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev6.flp
+	# dd if=bootload.bin of=disk.img conv=?noconv? 
+	#dd status=noxfer conv=notrunc if=osdev6-boot1.bin of=osdev6.flp
+	dd status=noxfer conv=notrunc if=osdev6-boot1.bin of=osdev6.flp
+	echo "------------------"
+	file osdev6.flp
+	hexdump osdev6.flp > osdev6.flp.hexdump.txt
+	echo "==================="
+	sudo mkdir -p /media/osdev6     # only work under unix
+	sudo mount -o loop /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev6.flp /media/osdev6/
+	sudo cp osdev6-boot1.bin /media/osdev6/OSDEV.BIN
+	sudo cp osdev6-stage2.bin /media/osdev6/KRNLDR.SYS
+	sudo umount /media/osdev6
+	sudo mount -o loop /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev6.flp /media/osdev6/
+	ls -al /media/osdev6/
+	# sudo umount /media/osdev6
+	
+	
+
+	# remember to umount /media/osdev6
+
+osdev6-iso.iso: osdev6-iso.bin		# only for barebone elf & eltorito & NOT under wins
+
+	echo "~~~~~~~~~~~~~~~~"
+	file osdev6-iso.bin
+	hexdump osdev6-iso.bin
+	objdump -d osdev6-iso.bin
+	objdump -D osdev6-iso.bin
+	echo "^^^^^^^^^^^^^^^^^"
+	cp osdev6-iso.bin iso/boot/kernel.elf
+	genisoimage -R                              \
+		-b boot/grub/stage2_eltorito    \
+		-no-emul-boot                   \
+		-boot-load-size 4               \
+		-A os                           \
+		-input-charset utf8             \
+		-quiet                          \
+		-boot-info-table                \
+		-o os.iso                       \
+		iso
+	cp os.iso osdev6-iso.iso 
+
+	#mkisofs -o osdev6.iso -b osdev6.bin cdiso/  # not working ... not understand ... MBR to iso ...
+
+run: osdev6.flp
+	bochs -f ../bochs-2.6.8.run/osdev6-ub.bxrc -q # cannot run under cygwin
+	# not working isobochs -f ../bochs-2.6.8.run/osdev6-iso.bxrc -q # cannot run under cygwin
+	# manual under win: cd bochs-2.6.8.run
+	# manual under win: click osdev6.bat
+
+osdev6-boot1.bin: osdev6-boot1.asm 							
+	nasm -f bin -o osdev6-boot1.bin osdev6-boot1.asm
+
+osdev6-stage2.bin: osdev6-stage2.asm 							
+	nasm -f bin -o osdev6-stage2.bin osdev6-stage2.asm
+
+osdev6-iso.bin: osdev6-iso.asm 							# nasm -f bin -o osdev6.bin osdev6.asm
+	nasm -f elf32 -o osdev6-iso.bin osdev6-iso.asm		# need linker not work under wins
+
+	
+clean:
+	rm -rf *.o *.obj *.elf *.flp *.iso *.bin		# no need bochs-2.6.8.run/*.iso bochs-2.6.8.run/*.flp

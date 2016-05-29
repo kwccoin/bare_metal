@@ -1,0 +1,103 @@
+# need nasm for flat binary
+# cygwin.bat
+# cd ......
+# make -f Makefile.osdev9 
+
+# osdev no.5 is not working as you cannot just use org to do memory
+
+AS = nasm
+ASFLAGS = -f bin 		# 512 byte MBR !!!!
+
+all: osdev9.flp 
+
+# only flp as it use flat binary for bootloader (not elf or pe)
+
+# http://mikeos.sourceforge.net/write-your-own-os.html
+# http://wiki.osdev.org/Bare_Bones_with_NASM
+# http://www.brokenthorn.com/Resources/osdev9.html
+
+# note no change to osdev9-
+#	boot1.asm, studio.inc, 
+#   use Ch9 A20.inc and stage2.asm
+#   note 2 more symbols under gdt.inc as well
+#   plus xchg bx,bx for debugging
+#   note the use of the most portable method Ch 9 m3.2
+
+osdev9.flp: osdev9-boot1.bin osdev9-stage2.bin
+
+	#sudo umount -f /media/osdev9
+	#objdump -D sum_of_three.o
+	#objdump -D loader.o 
+	echo "=================="
+	file osdev9-boot1.bin
+	hexdump osdev9-boot1.bin > osdev9-boot1.bin.hexdump.txt
+	echo "------------------"
+	#sudo dd bs=512 count=2880 if=/dev/zero of=/home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev9.flp conv=notrunc # or bs=2x80x18b 
+	#sudo mkfs.msdos /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev9.flp
+	sudo dd bs=512 count=2880 if=/dev/zero of=osdev9.flp conv=notrunc # or bs=2x80x18b 
+	sudo mkfs.msdos osdev9.flp
+	# dd if=bootload.bin of=disk.img conv=?noconv? 
+	#dd status=noxfer conv=notrunc if=osdev9-boot1.bin of=osdev9.flp
+	dd status=noxfer conv=notrunc if=osdev9-boot1.bin of=osdev9.flp
+	echo "------------------"
+	file osdev9.flp
+	hexdump osdev9.flp > osdev9.flp.hexdump.txt
+	echo "==================="
+	sudo mkdir -p /media/osdev9     # only work under unix
+	#sudo mount -o loop /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev9.flp /media/osdev9/
+	sudo mount -o loop osdev9.flp /media/osdev9/
+	sudo cp osdev9-boot1.bin /media/osdev9/OSDEV.BIN
+	sudo cp osdev9-stage2.bin /media/osdev9/KRNLDR.SYS
+	sudo umount /media/osdev9
+	#sudo mount -o loop /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev9.flp /media/osdev9/
+	sudo mount -o loop osdev9.flp /media/osdev9/
+	ls -al /media/osdev9/
+	# sudo umount /media/osdev9
+	
+	
+
+	# remember to umount /media/osdev9
+
+osdev9-iso.iso: osdev9-iso.bin		# only for barebone elf & eltorito & NOT under wins
+
+	echo "~~~~~~~~~~~~~~~~"
+	file osdev9-iso.bin
+	hexdump osdev9-iso.bin
+	objdump -d osdev9-iso.bin
+	objdump -D osdev9-iso.bin
+	echo "^^^^^^^^^^^^^^^^^"
+	cp osdev9-iso.bin iso/boot/kernel.elf
+	genisoimage -R                              \
+		-b boot/grub/stage2_eltorito    \
+		-no-emul-boot                   \
+		-boot-load-size 4               \
+		-A os                           \
+		-input-charset utf8             \
+		-quiet                          \
+		-boot-info-table                \
+		-o os.iso                       \
+		iso
+	cp os.iso osdev9-iso.iso 
+
+	#mkisofs -o osdev9.iso -b osdev9.bin cdiso/  # not working ... not understand ... MBR to iso ...
+
+run: osdev9.flp
+	bochs -f ../bochs-2.6.8.run/osdev9-ub.bxrc -q # cannot run under cygwin
+	sudo umount -f /media/osdev9
+	
+	# not working isobochs -f ../bochs-2.6.8.run/osdev9-iso.bxrc -q # cannot run under cygwin
+	# manual under win: cd bochs-2.6.8.run
+	# manual under win: click osdev9.bat
+
+osdev9-boot1.bin: osdev9-boot1.asm 							
+	nasm -f bin -o osdev9-boot1.bin osdev9-boot1.asm
+
+osdev9-stage2.bin: osdev9-stage2.asm 							
+	nasm -f bin -o osdev9-stage2.bin osdev9-stage2.asm
+
+osdev9-iso.bin: osdev9-iso.asm 							# nasm -f bin -o osdev9.bin osdev9.asm
+	nasm -f elf32 -o osdev9-iso.bin osdev9-iso.asm		# need linker not work under wins
+
+	
+clean:
+	rm -rf *.o *.obj *.elf *.flp *.iso *.bin		# no need bochs-2.6.8.run/*.iso bochs-2.6.8.run/*.flp

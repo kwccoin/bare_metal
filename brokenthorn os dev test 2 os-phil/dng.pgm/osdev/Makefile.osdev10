@@ -1,0 +1,103 @@
+# need nasm for flat binary
+# cygwin.bat
+# cd ......
+# make -f Makefile.osdev10 
+
+# osdev no.5 is not working as you cannot just use org to do memory
+
+AS = nasm
+ASFLAGS = -f bin 		# 512 byte MBR !!!!
+
+all: osdev10.flp 
+
+# only flp as it use flat binary for bootloader (not elf or pe)
+
+# http://mikeos.sourceforge.net/write-your-own-os.html
+# http://wiki.osdev.org/Bare_Bones_with_NASM
+# http://www.brokenthorn.com/Resources/osdev10.html
+
+# note no change to osdev10-
+#	boot1.asm, studio.inc, 
+#   use Ch9 A20.inc and stage2.asm
+#   note 2 more symbols under gdt.inc as well
+#   plus xchg bx,bx for debugging
+#   note the use of the most portable method Ch 9 m3.2
+
+osdev10.flp: osdev10-boot1.bin osdev10-stage2.bin
+
+	#sudo umount -f /media/osdev10
+	#objdump -D sum_of_three.o
+	#objdump -D loader.o 
+	echo "=================="
+	file osdev10-boot1.bin
+	hexdump osdev10-boot1.bin > osdev10-boot1.bin.hexdump.txt
+	echo "------------------"
+	#sudo dd bs=512 count=2880 if=/dev/zero of=/home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev10.flp conv=notrunc # or bs=2x80x18b 
+	#sudo mkfs.msdos /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev10.flp
+	sudo dd bs=512 count=2880 if=/dev/zero of=osdev10.flp conv=notrunc # or bs=2x80x18b 
+	sudo mkfs.msdos osdev10.flp
+	# dd if=bootload.bin of=disk.img conv=?noconv? 
+	#dd status=noxfer conv=notrunc if=osdev10-boot1.bin of=osdev10.flp
+	dd status=noxfer conv=notrunc if=osdev10-boot1.bin of=osdev10.flp
+	echo "------------------"
+	file osdev10.flp
+	hexdump osdev10.flp > osdev10.flp.hexdump.txt
+	echo "==================="
+	sudo mkdir -p /media/osdev10     # only work under unix
+	#sudo mount -o loop /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev10.flp /media/osdev10/
+	sudo mount -o loop osdev10.flp /media/osdev10/
+	sudo cp osdev10-boot1.bin /media/osdev10/OSDEV.BIN
+	sudo cp osdev10-stage2.bin /media/osdev10/KRNLDR.SYS
+	sudo umount /media/osdev10
+	#sudo mount -o loop /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev10.flp /media/osdev10/
+	sudo mount -o loop osdev10.flp /media/osdev10/
+	ls -al /media/osdev10/
+	# sudo umount /media/osdev10
+	
+	
+
+	# remember to umount /media/osdev10
+
+osdev10-iso.iso: osdev10-iso.bin		# only for barebone elf & eltorito & NOT under wins
+
+	echo "~~~~~~~~~~~~~~~~"
+	file osdev10-iso.bin
+	hexdump osdev10-iso.bin
+	objdump -d osdev10-iso.bin
+	objdump -D osdev10-iso.bin
+	echo "^^^^^^^^^^^^^^^^^"
+	cp osdev10-iso.bin iso/boot/kernel.elf
+	genisoimage -R                              \
+		-b boot/grub/stage2_eltorito    \
+		-no-emul-boot                   \
+		-boot-load-size 4               \
+		-A os                           \
+		-input-charset utf8             \
+		-quiet                          \
+		-boot-info-table                \
+		-o os.iso                       \
+		iso
+	cp os.iso osdev10-iso.iso 
+
+	#mkisofs -o osdev10.iso -b osdev10.bin cdiso/  # not working ... not understand ... MBR to iso ...
+
+run: osdev10.flp
+	bochs -f ../bochs-2.6.8.run/osdev10-ub.bxrc -q # cannot run under cygwin
+	sudo umount -f /media/osdev10
+	
+	# not working isobochs -f ../bochs-2.6.8.run/osdev10-iso.bxrc -q # cannot run under cygwin
+	# manual under win: cd bochs-2.6.8.run
+	# manual under win: click osdev10.bat
+
+osdev10-boot1.bin: osdev10-boot1.asm 							
+	nasm -f bin -o osdev10-boot1.bin osdev10-boot1.asm
+
+osdev10-stage2.bin: osdev10-stage2.asm 							
+	nasm -f bin -o osdev10-stage2.bin osdev10-stage2.asm
+
+osdev10-iso.bin: osdev10-iso.asm 							# nasm -f bin -o osdev10.bin osdev10.asm
+	nasm -f elf32 -o osdev10-iso.bin osdev10-iso.asm		# need linker not work under wins
+
+	
+clean:
+	rm -rf *.o *.obj *.elf *.flp *.iso *.bin		# no need bochs-2.6.8.run/*.iso bochs-2.6.8.run/*.flp

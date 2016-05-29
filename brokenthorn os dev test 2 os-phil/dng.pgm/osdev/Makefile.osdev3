@@ -1,0 +1,68 @@
+# need nasm for flat binary
+# cygwin.bat
+# cd ......
+# make -f Makefile.osdev3 
+
+AS = nasm
+ASFLAGS = -f bin 		# 512 byte MBR !!!!
+
+all: osdev3.flp 
+
+# only flp as it use flat binary for bootloader (not elf or pe)
+
+# http://mikeos.sourceforge.net/write-your-own-os.html
+# http://wiki.osdev.org/Bare_Bones_with_NASM
+# http://www.brokenthorn.com/Resources/OSDev3.html
+
+osdev3.flp: osdev3.bin
+ 
+	#objdump -D sum_of_three.o
+	#objdump -D loader.o 
+	echo "=================="
+	file osdev3.bin
+	hexdump osdev3.bin
+	echo "------------------"
+	dd status=noxfer conv=notrunc if=osdev3.bin of=osdev3.flp
+	echo "------------------"
+	file osdev3.flp
+	hexdump osdev3.flp
+	echo "==================="
+
+osdev3-iso.iso: osdev3-iso.bin		# only for barebone elf & eltorito & NOT under wins
+
+	echo "~~~~~~~~~~~~~~~~"
+	file osdev3-iso.bin
+	hexdump osdev3-iso.bin
+	objdump -d osdev3-iso.bin
+	objdump -D osdev3-iso.bin
+	echo "^^^^^^^^^^^^^^^^^"
+	cp osdev3-iso.bin iso/boot/kernel.elf
+	genisoimage -R                              \
+		-b boot/grub/stage2_eltorito    \
+		-no-emul-boot                   \
+		-boot-load-size 4               \
+		-A os                           \
+		-input-charset utf8             \
+		-quiet                          \
+		-boot-info-table                \
+		-o os.iso                       \
+		iso
+	cp os.iso osdev3-iso.iso 
+
+	#mkisofs -o osdev3.iso -b osdev3.bin cdiso/  # not working ... not understand ... MBR to iso ...
+
+run: %.bin
+	bochs -f bochs-2.6.8.run/osdev3.bxrc -q # cannot run under cygwin
+	bochs -f bochs-2.6.8.run/osdev3-iso.bxrc -q # cannot run under cygwin
+	# manual under win: cd bochs-2.6.8.run
+	# manual under win: click osdev3.bat
+
+osdev3.bin: osdev3-boot1.asm 									# nasm -f bin -o osdev3.bin osdev3.asm
+	nasm -f bin -o osdev3.bin osdev3-boot1.asm
+
+osdev3-iso.bin: osdev3-iso.asm 							# nasm -f bin -o osdev3.bin osdev3.asm
+	nasm -f elf32 -o osdev3-iso.bin osdev3-iso.asm		# need linker not work under wins
+
+	
+clean:
+	rm -rf *.o *.obj *.elf *.flp *.iso 		# no need bochs-2.6.8.run/*.iso bochs-2.6.8.run/*.flp

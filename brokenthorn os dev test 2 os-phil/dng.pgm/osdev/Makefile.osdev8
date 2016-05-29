@@ -1,0 +1,90 @@
+# need nasm for flat binary
+# cygwin.bat
+# cd ......
+# make -f Makefile.osdev8 
+
+# osdev no.5 is not working as you cannot just use org to do memory
+
+AS = nasm
+ASFLAGS = -f bin 		# 512 byte MBR !!!!
+
+all: osdev8.flp 
+
+# only flp as it use flat binary for bootloader (not elf or pe)
+
+# http://mikeos.sourceforge.net/write-your-own-os.html
+# http://wiki.osdev.org/Bare_Bones_with_NASM
+# http://www.brokenthorn.com/Resources/osdev8.html
+
+osdev8.flp: osdev8-boot1.bin osdev8-stage2.bin
+
+	#sudo umount -f /media/osdev8
+	#objdump -D sum_of_three.o
+	#objdump -D loader.o 
+	echo "=================="
+	file osdev8-boot1.bin
+	hexdump osdev8-boot1.bin > osdev8-boot1.bin.hexdump.txt
+	echo "------------------"
+	sudo dd bs=512 count=2880 if=/dev/zero of=/home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev8.flp conv=notrunc # or bs=2x80x18b 
+	sudo mkfs.msdos /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev8.flp
+	# dd if=bootload.bin of=disk.img conv=?noconv? 
+	#dd status=noxfer conv=notrunc if=osdev8-boot1.bin of=osdev8.flp
+	dd status=noxfer conv=notrunc if=osdev8-boot1.bin of=osdev8.flp
+	echo "------------------"
+	file osdev8.flp
+	hexdump osdev8.flp > osdev8.flp.hexdump.txt
+	echo "==================="
+	sudo mkdir -p /media/osdev8     # only work under unix
+	sudo mount -o loop /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev8.flp /media/osdev8/
+	sudo cp osdev8-boot1.bin /media/osdev8/OSDEV.BIN
+	sudo cp osdev8-stage2.bin /media/osdev8/KRNLDR.SYS
+	sudo umount /media/osdev8
+	sudo mount -o loop /home/chichunng/Desktop/hgfs/2016-05-20c-mac.osdev/dng.pgm/osdev/osdev8.flp /media/osdev8/
+	ls -al /media/osdev8/
+	# sudo umount /media/osdev8
+	
+	
+
+	# remember to umount /media/osdev8
+
+osdev8-iso.iso: osdev8-iso.bin		# only for barebone elf & eltorito & NOT under wins
+
+	echo "~~~~~~~~~~~~~~~~"
+	file osdev8-iso.bin
+	hexdump osdev8-iso.bin
+	objdump -d osdev8-iso.bin
+	objdump -D osdev8-iso.bin
+	echo "^^^^^^^^^^^^^^^^^"
+	cp osdev8-iso.bin iso/boot/kernel.elf
+	genisoimage -R                              \
+		-b boot/grub/stage2_eltorito    \
+		-no-emul-boot                   \
+		-boot-load-size 4               \
+		-A os                           \
+		-input-charset utf8             \
+		-quiet                          \
+		-boot-info-table                \
+		-o os.iso                       \
+		iso
+	cp os.iso osdev8-iso.iso 
+
+	#mkisofs -o osdev8.iso -b osdev8.bin cdiso/  # not working ... not understand ... MBR to iso ...
+
+run: osdev8.flp
+	bochs -f ../bochs-2.6.8.run/osdev8-ub.bxrc -q # cannot run under cygwin
+	# not working isobochs -f ../bochs-2.6.8.run/osdev8-iso.bxrc -q # cannot run under cygwin
+	# manual under win: cd bochs-2.6.8.run
+	# manual under win: click osdev8.bat
+
+osdev8-boot1.bin: osdev8-boot1.asm 							
+	nasm -f bin -o osdev8-boot1.bin osdev8-boot1.asm
+
+osdev8-stage2.bin: osdev8-stage2.asm 							
+	nasm -f bin -o osdev8-stage2.bin osdev8-stage2.asm
+
+osdev8-iso.bin: osdev8-iso.asm 							# nasm -f bin -o osdev8.bin osdev8.asm
+	nasm -f elf32 -o osdev8-iso.bin osdev8-iso.asm		# need linker not work under wins
+
+	
+clean:
+	rm -rf *.o *.obj *.elf *.flp *.iso *.bin		# no need bochs-2.6.8.run/*.iso bochs-2.6.8.run/*.flp

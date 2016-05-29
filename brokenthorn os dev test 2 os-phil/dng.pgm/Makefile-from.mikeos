@@ -1,0 +1,61 @@
+# need nasm 
+
+AS = nasm
+ASFLAGS = -f bin 		# 512 byte MBR !!!!
+
+all: mikeos1.flp barebone1.iso
+
+# http://mikeos.sourceforge.net/write-your-own-os.html
+
+mikeos1.flp: mikeos1.bin
+ 
+	#objdump -D sum_of_three.o
+	#objdump -D loader.o 
+	echo "=================="
+	file mikeos1.bin
+	hexdump mikeos1.bin
+	echo "------------------"
+	dd status=noxfer conv=notrunc if=mikeos1.bin of=mikeos1.flp
+	echo "------------------"
+	file mikeos1.flp
+	hexdump mikeos1.flp
+	echo "==================="
+
+barebone1.iso: barebone1.bin					# not used as it is not really a elf/using eltorito ... 
+
+	echo "~~~~~~~~~~~~~~~~"
+	file barebone1.bin
+	hexdump barebone1.bin
+	objdump -d barebone1.bin
+	objdump -D barebone1.bin
+	echo "^^^^^^^^^^^^^^^^^"
+	cp barebone1.bin iso/boot/kernel.elf
+	genisoimage -R                              \
+		-b boot/grub/stage2_eltorito    \
+		-no-emul-boot                   \
+		-boot-load-size 4               \
+		-A os                           \
+		-input-charset utf8             \
+		-quiet                          \
+		-boot-info-table                \
+		-o os.iso                       \
+		iso
+	cp os.iso barebone1.iso 
+
+	#mkisofs -o mikeos1.iso -b mikeos1.bin cdiso/  # not working ... not understand ... MBR to iso ...
+
+run: %.bin
+	bochs -f bochs-2.6.8.run/mikeos1.bxrc -q # cannot run under cygwin
+	bochs -f bochs-2.6.8.run/barebone1.bxrc -q # cannot run under cygwin
+	# manual under dos cd bochs-2.6.8.run
+	# manual under dos mikeos1.bat
+
+mikeos1.bin: mikeos1.asm 									# nasm -f bin -o mikeos1.bin mikeos1.asm
+	nasm -f bin -o mikeos1.bin mikeos1.asm
+
+barebone1.bin: barebone1.asm 									# nasm -f bin -o mikeos1.bin mikeos1.asm
+	nasm -f elf32 -o barebone1.bin barebone1.asm
+
+	
+clean:
+	rm -rf *.o *.obj *.elf *.flp *.iso 		# no need bochs-2.6.8.run/*.iso bochs-2.6.8.run/*.flp
